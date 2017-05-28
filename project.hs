@@ -1,24 +1,96 @@
-type PropAtom = String
-data Proposition = Atom PropAtom | Not Proposition | And Proposition Proposition | Or Proposition Proposition | Imp Proposition Proposition | Iff Proposition Proposition
-	deriving(Show)
+module Libr where
 
+type Atomica = Char
+data Proposicion = PropAtomica Atomica | And Proposicion Proposicion | Or Proposicion Proposicion | No Proposicion | Implica Proposicion Proposicion | DobleImplica Proposicion Proposicion deriving (Show)
+type Evaluador = [(Atomica,Bool)]
+type Despliegue = [Proposicion]
 
-type Valuation = [(PropAtom, Bool)]
+evaluarAtom:: Evaluador->Atomica->Bool
+evaluarAtom lista elemento = if (elem (elemento,True) lista) then True else False
 
-evalAtom :: Valuation -> Proposition -> Bool
-evalAtom (Atom x) v = 
-f [] = True
-f [(x, y) : xs] = x : y : f xs
+evaluar:: Proposicion -> Evaluador -> Bool
+evaluar (PropAtomica a) eval = evaluarAtom eval a
+evaluar (And a b) eval = (evaluar a eval) && (evaluar b eval)
+evaluar (Or a b) eval = (evaluar a eval) || (evaluar b eval)
+evaluar (No a) eval = not (evaluar a eval)
+evaluar (Implica a b) eval = if ((evaluar a eval)==True && (evaluar b eval)==False) then False else True
+evaluar (DobleImplica a b) eval = if ((evaluar a eval)==(evaluar b eval)) then True else False
 
+agregar:: Atomica->[[(Atomica,Bool)]]->[[(Atomica,Bool)]]
+agregar a [] = []
+agregar a (x:xs) = ((a,False):x):((a,True):x):(agregar a xs) 
 
+lista:: [Atomica]->[[(Atomica,Bool)]]->[[(Atomica,Bool)]]
+lista [] a = a
+lista (x:xs) a =  lista xs (agregar x a)
 
-eval :: Valuation -> Proposition -> Bool
-eval (Atom x) v = evalAtom x v
-eval (Not x) v = not (eval x v)
-eval (And x y) v = && (eval x v) (eval y v)
-eval (Or x y) v = || (eval x v) (eval y v)
-eval (Imp x y) v = imp (eval x v) (eval y v)
-eval (Iff x y) v =  iff (eval x v) (eval y v)
+listaInit:: [Atomica]->[[(Atomica,Bool)]]
+listaInit (x:xs) = lista xs ([(x,False)]:[(x,True)]:[])
 
--- valuations :: [PropAtom] -> [Valuation]
--- valuations (x:y) = 
+sacarAtomos:: Proposicion->[Atomica]->[Atomica]
+sacarAtomos (PropAtomica a) aux = if (elem a aux) then aux else (a:aux) 
+sacarAtomos (And a b) aux = sacarAtomos b (sacarAtomos a aux)
+sacarAtomos (Or a b) aux = sacarAtomos b (sacarAtomos a aux)
+sacarAtomos (No a) aux = sacarAtomos a aux
+sacarAtomos (Implica a b) aux = sacarAtomos b (sacarAtomos a aux)
+sacarAtomos (DobleImplica a b) aux = sacarAtomos b (sacarAtomos a aux)
+
+valuando:: Proposicion->[[(Atomica,Bool)]]->[Bool]
+valuando a b =  map (evaluar a) b
+
+tautologia::Proposicion->Bool
+tautologia a = and (valuando a (listaInit (sacarAtomos a [])))
+
+contradiccion::Proposicion->Bool
+contradiccion a = and $ map (==False) (valuando a (listaInit (sacarAtomos a [])))
+
+contingencia::Proposicion->Bool
+contingencia a = if (((tautologia a)==False) && ((contradiccion a)==False)) then True else False
+module Libr where
+
+type Atomica = Char
+data Proposicion = PropAtomica Atomica | And Proposicion Proposicion | Or Proposicion Proposicion | No Proposicion | Implica Proposicion Proposicion | DobleImplica Proposicion Proposicion deriving (Show)
+type Evaluador = [(Atomica,Bool)]
+type Despliegue = [Proposicion]
+
+evaluarAtom:: Evaluador->Atomica->Bool
+evaluarAtom lista elemento = if (elem (elemento,True) lista) then True else False
+
+evaluar:: Proposicion -> Evaluador -> Bool
+evaluar (PropAtomica a) eval = evaluarAtom eval a
+evaluar (And a b) eval = (evaluar a eval) && (evaluar b eval)
+evaluar (Or a b) eval = (evaluar a eval) || (evaluar b eval)
+evaluar (No a) eval = not (evaluar a eval)
+evaluar (Implica a b) eval = if ((evaluar a eval)==True && (evaluar b eval)==False) then False else True
+evaluar (DobleImplica a b) eval = if ((evaluar a eval)==(evaluar b eval)) then True else False
+
+agregar:: Atomica->[[(Atomica,Bool)]]->[[(Atomica,Bool)]]
+agregar a [] = []
+agregar a (x:xs) = ((a,False):x):((a,True):x):(agregar a xs) 
+
+lista:: [Atomica]->[[(Atomica,Bool)]]->[[(Atomica,Bool)]]
+lista [] a = a
+lista (x:xs) a =  lista xs (agregar x a)
+
+listaInit:: [Atomica]->[[(Atomica,Bool)]]
+listaInit (x:xs) = lista xs ([(x,False)]:[(x,True)]:[])
+
+sacarAtomos:: Proposicion->[Atomica]->[Atomica]
+sacarAtomos (PropAtomica a) aux = if (elem a aux) then aux else (a:aux) 
+sacarAtomos (And a b) aux = sacarAtomos b (sacarAtomos a aux)
+sacarAtomos (Or a b) aux = sacarAtomos b (sacarAtomos a aux)
+sacarAtomos (No a) aux = sacarAtomos a aux
+sacarAtomos (Implica a b) aux = sacarAtomos b (sacarAtomos a aux)
+sacarAtomos (DobleImplica a b) aux = sacarAtomos b (sacarAtomos a aux)
+
+valuando:: Proposicion->[[(Atomica,Bool)]]->[Bool]
+valuando a b =  map (evaluar a) b
+
+tautologia::Proposicion->Bool
+tautologia a = and (valuando a (listaInit (sacarAtomos a [])))
+
+contradiccion::Proposicion->Bool
+contradiccion a = and $ map (==False) (valuando a (listaInit (sacarAtomos a [])))
+
+contingencia::Proposicion->Bool
+contingencia a = if (((tautologia a)==False) && ((contradiccion a)==False)) then True else False
