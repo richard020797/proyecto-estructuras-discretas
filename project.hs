@@ -6,13 +6,13 @@ type Mosr = [Proposition]
 evalAtom:: Evaluating->Atom->Bool
 evalAtom list element = if (elem (element,True) list) then True else False
 
-eval:: Proposition -> Evaluating -> Bool
-eval (PropAtom a) eval = evalAtom eval a
-eval (And a b) eval = (eval a eval) && (eval b eval)
-eval (Or a b) eval = (eval a eval) || (eval b eval)
-eval (Not a) eval = not (eval a eval)
-eval (Imp a b) eval = if ((eval a eval)==True && (eval b eval)==False) then False else True
-eval (DoubleImp a b) eval = if ((eval a eval)==(eval b eval)) then True else False
+evaluate:: Proposition -> Evaluating -> Bool
+evaluate (PropAtom a) eval = evalAtom eval a
+evaluate (And a b) eval = (evaluate a eval) && (evaluate b eval)
+evaluate (Or a b) eval = (evaluate a eval) || (evaluate b eval)
+evaluate (Not a) eval = not (evaluate a eval)
+evaluate (Imp a b) eval = if ((evaluate a eval)==True && (evaluate b eval)==False) then False else True
+evaluate (DoubleImp a b) eval = if ((evaluate a eval)==(evaluate b eval)) then True else False
 
 add:: Atom->[[(Atom,Bool)]]->[[(Atom,Bool)]]
 add a [] = []
@@ -34,14 +34,14 @@ pullAtoms (Not a) aux = pullAtoms a aux
 pullAtoms (Imp a b) aux = pullAtoms b (pullAtoms a aux)
 pullAtoms (DoubleImp a b) aux = pullAtoms b (pullAtoms a aux)
 
-evaluate:: Proposition->[[(Atom,Bool)]]->[Bool]
-evaluate a b =  map (eval a) b
+giveValue:: Proposition->[[(Atom,Bool)]]->[Bool]
+giveValue a b =  map (evaluate a) b
 
 tautology::Proposition->Bool
-tautology a = and (evaluate a (listInit (pullAtoms a [])))
+tautology a = and (giveValue a (listInit (pullAtoms a [])))
 
 contradiction::Proposition->Bool
-contradiction a = and $ map (==False) (evaluate a (listInit (pullAtoms a [])))
+contradiction a = and $ map (==False) (giveValue a (listInit (pullAtoms a [])))
 
 contingency::Proposition->Bool
 contingency a = if (((tautology a)==False) && ((contradiction a)==False)) then True else False
